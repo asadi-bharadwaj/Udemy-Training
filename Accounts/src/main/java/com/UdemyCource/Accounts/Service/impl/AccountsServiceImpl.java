@@ -4,11 +4,13 @@ import com.UdemyCource.Accounts.Constants.AccountsConstants;
 import com.UdemyCource.Accounts.Entity.Accounts;
 import com.UdemyCource.Accounts.Entity.Customer;
 import com.UdemyCource.Accounts.Exceptions.CustomerAlreadyExistsException;
+import com.UdemyCource.Accounts.Exceptions.ResourceNotFoundException;
 import com.UdemyCource.Accounts.Mapper.AccountsMapper;
 import com.UdemyCource.Accounts.Mapper.CustomerMapper;
 import com.UdemyCource.Accounts.Repository.AccountsRepository;
 import com.UdemyCource.Accounts.Repository.CustomerRepository;
 import com.UdemyCource.Accounts.Service.IAccountsService;
+import com.UdemyCource.Accounts.dto.AccountsDto;
 import com.UdemyCource.Accounts.dto.CustomerDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,24 @@ public class AccountsServiceImpl implements IAccountsService {
 
         Customer savedCustomer = customerRepository.save(customer);
         accountsRepository.save(createNewAccount(savedCustomer));
+    }
+
+    /**
+     * @param mobileNumber
+     * @return
+     */
+    @Override
+    public CustomerDto fetchAccount(String mobileNumber) {
+       Customer details = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
+               () -> new ResourceNotFoundException("Customer", "MobileNumber", mobileNumber)
+       );
+
+       Accounts accDetails = accountsRepository.findByCustomerId(details.getCustomerId()).orElseThrow(
+               () -> new ResourceNotFoundException("Account", "customerId","--")
+       );
+      CustomerDto customerDto = CustomerMapper.mapToCustomerDto(details, new CustomerDto());
+      customerDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accDetails, new AccountsDto()));
+       return customerDto;
     }
 
     /**
